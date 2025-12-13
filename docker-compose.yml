@@ -1,0 +1,70 @@
+version: '3.8'
+
+services:
+  postgres:
+    image: postgres:15-alpine
+    container_name: vanilla-postgres
+    restart: always
+    environment:
+      POSTGRES_USER: vanilla
+      POSTGRES_PASSWORD: vanilla
+      POSTGRES_DB: vanilla
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U vanilla"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+  vanilla-n8n:
+    image: n8nio/n8n:latest
+    restart: always
+    environment:
+      - DB_TYPE=postgresdb
+      - DB_POSTGRESDB_HOST=postgres
+      - DB_POSTGRESDB_DATABASE=vanilla
+      - DB_POSTGRESDB_USER=vanilla
+      - DB_POSTGRESDB_PASSWORD=vanilla
+      - DB_POSTGRESDB_PORT=5432
+      - N8N_BASIC_AUTH_ACTIVE=true
+      - N8N_BASIC_AUTH_USER=admin
+      - N8N_BASIC_AUTH_PASSWORD=admin
+      - NODE_ENV=production
+      - WEBHOOK_URL=http://localhost:5678/
+      - GENERIC_TIMEZONE=UTC
+      - N8N_SECURE_COOKIE=false
+    ports:
+      - "5678:5678"
+    volumes:
+      - vanilla-n8n_data:/home/node/.n8n
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  vanilla-frontend:
+    build: 
+      context: ./vanilles
+      dockerfile: Dockerfile  
+    restart: always
+    environment:
+      - PORT=3000
+    ports:
+      - "3000:3000"
+    volumes:
+      - vanilla-data:/app/data
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+
+volumes:
+  postgres_data:
+  pgadmin_data:
+  vanilla-n8n_data:
+  vanilla-data:
+
+networks:
+  default:
+    name: vanilla-network
