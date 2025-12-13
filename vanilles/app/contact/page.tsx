@@ -77,7 +77,7 @@ export default function ContactPage() {
               <div className="pt-8 border-t border-border">
                 <h3 className="text-xl font-serif mb-4">Follow Us</h3>
                 <a
-                  href="https://instagram.com/vanillesbyhiba"
+                  href="https://www.instagram.com/_vanilles_/"
                   target="_blank"
                   rel="noopener noreferrer"
                   className="inline-flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors"
