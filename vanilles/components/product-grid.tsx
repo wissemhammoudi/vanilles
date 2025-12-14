@@ -1,104 +1,93 @@
+"use client"
+import { useState, useEffect } from "react"
 import { ProductCard } from "@/components/product-card"
 
-const allProducts = [
-  {
-    id: "1",
-    name: "Linen Midi Dress",
-    price: 89.0,
-    image: "/elegant-beige-linen-midi-dress-on-model.jpg",
-    gender: "Women",
-    category: "Dresses",
-    collection: "Collection 2025",
-  },
-  {
-    id: "2",
-    name: "Silk Blouse",
-    price: 65.0,
-    image: "/white-silk-blouse-minimalist-fashion.jpg",
-    gender: "Women",
-    category: "Tops",
-    collection: "Essentials",
-  },
-  {
-    id: "3",
-    name: "Wide Leg Trousers",
-    price: 79.0,
-    image: "/beige-wide-leg-trousers-elegant.jpg",
-    gender: "Women",
-    category: "Bottoms",
-    collection: "Best Sellers",
-  },
-  {
-    id: "4",
-    name: "Cotton Knit Cardigan",
-    price: 72.0,
-    image: "/cream-cotton-cardigan-minimalist.jpg",
-    gender: "Women",
-    category: "Knitwear",
-    collection: "Nouveautés",
-  },
-  {
-    id: "5",
-    name: "Pleated Maxi Skirt",
-    price: 85.0,
-    image: "/ivory-pleated-maxi-skirt-elegant.jpg",
-    gender: "Women",
-    category: "Bottoms",
-    collection: "Collection 2025",
-  },
-  {
-    id: "6",
-    name: "Cashmere Turtleneck",
-    price: 98.0,
-    image: "/beige-cashmere-turtleneck-sweater.jpg",
-    gender: "Women",
-    category: "Knitwear",
-    collection: "Best Sellers",
-  },
-  {
-    id: "7",
-    name: "Linen Pants",
-    price: 75.0,
-    image: "/white-linen-pants-minimalist.jpg",
-    gender: "Men",
-    category: "Bottoms",
-    collection: "Essentials",
-  },
-  {
-    id: "8",
-    name: "Silk Slip Dress",
-    price: 92.0,
-    image: "/champagne-silk-slip-dress-elegant.jpg",
-    gender: "Women",
-    category: "Dresses",
-    collection: "En Promos",
-  },
-  {
-    id: "9",
-    name: "Cotton Shirt",
-    price: 68.0,
-    image: "/beige-cotton-shirt-men-minimalist.jpg",
-    gender: "Men",
-    category: "Shirts",
-    collection: "Essentials",
-  },
-  {
-    id: "10",
-    name: "Wool Blazer",
-    price: 145.0,
-    image: "/cream-wool-blazer-men-elegant.jpg",
-    gender: "Men",
-    category: "Outerwear",
-    collection: "Collection 2025",
-  },
-]
+interface Product {
+  id: string;
+  name: string;
+  price: number;
+  image: string;
+  gender: string;
+  category: string;
+  collection: string;
+  color?: string;
+}
 
 export function ProductGrid() {
+  const [products, setProducts] = useState<Product[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    async function fetchProducts() {
+      try {
+        console.log('Fetching products from API...');
+        const response = await fetch('/api/products');
+        
+        console.log('Response status:', response.status);
+        
+        if (!response.ok) {
+          // Get the actual error message from the API
+          const errorData = await response.json().catch(() => ({ error: 'Unknown error' }));
+          console.error('API Error Response:', errorData);
+          throw new Error(errorData.error || errorData.message || 'Failed to fetch products');
+        }
+        
+        const data = await response.json();
+        console.log('Products received:', data.length);
+        setProducts(data);
+      } catch (error) {
+        console.error("Failed to fetch products:", error);
+        setError(error instanceof Error ? error.message : 'Failed to load products');
+      } finally {
+        setIsLoading(false);
+      }
+    }
+
+    fetchProducts();
+  }, []);
+
+  if (isLoading) {
+    return (
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
+        {[...Array(6)].map((_, i) => (
+          <div key={i} className="animate-pulse">
+            <div className="bg-gray-200 aspect-[3/4] rounded-lg mb-4"></div>
+            <div className="bg-gray-200 h-4 rounded w-3/4 mb-2"></div>
+            <div className="bg-gray-200 h-4 rounded w-1/4"></div>
+          </div>
+        ))}
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="text-center py-12">
+        <p className="text-red-500 mb-4">Error loading products: {error}</p>
+        <button 
+          onClick={() => window.location.reload()}
+          className="px-4 py-2 bg-black text-white rounded hover:bg-gray-800"
+        >
+          Retry
+        </button>
+      </div>
+    );
+  }
+
+  if (products.length === 0) {
+    return (
+      <div className="text-center py-12">
+        <p className="text-gray-500">No products found</p>
+      </div>
+    );
+  }
+
   return (
     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
-      {allProducts.map((product) => (
+      {products.map((product) => (
         <ProductCard key={product.id} product={product} />
       ))}
     </div>
-  )
+  );
 }

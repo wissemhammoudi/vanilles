@@ -1,53 +1,118 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import Image from "next/image"
 import { Button } from "@/components/ui/button"
-import { ShoppingBag, Check, Plus, Minus } from "lucide-react"
+import { ShoppingBag, Check, Plus, Minus, Loader } from "lucide-react"
 import { useCart } from "@/lib/cart-context"
+
+interface Product {
+  id: string
+  name: string
+  price: number
+  image: string
+  gender: string
+  category: string
+  collection: string
+  color: string
+  description?: string
+  fabric?: string
+  care?: string
+}
 
 export function ProductDetails({ productId }: { productId: string }) {
   const [selectedSize, setSelectedSize] = useState<string>("")
   const [quantity, setQuantity] = useState(1)
   const [selectedImage, setSelectedImage] = useState(0)
   const [addedToCart, setAddedToCart] = useState(false)
+  const [product, setProduct] = useState<Product | null>(null)
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
   const { addItem } = useCart()
-
-  const product = {
-    name: "Linen Midi Dress",
-    price: 89.0,
-    description:
-      "Elegant midi dress crafted from premium European linen. Features a relaxed fit, V-neckline, and subtle pleating at the waist. Perfect for warm weather occasions.",
-    fabric: "100% European Linen",
-    care: "Machine wash cold, hang dry",
-    images: [
-      "/elegant-beige-linen-midi-dress-on-model.jpg",
-      "/linen-dress-detail-view.jpg",
-      "/linen-dress-back-view.jpg",
-      "/linen-dress-styled-look.jpg",
-    ],
-  }
+  
+  // Product images (if you want multiple images, store them in your sheet)
+  const productImages = product?.image 
+    ? [product.image, "/placeholder.svg", "/placeholder.svg", "/placeholder.svg"]
+    : ["/placeholder.svg", "/placeholder.svg", "/placeholder.svg", "/placeholder.svg"]
 
   const sizes = ["XS", "S", "M", "L", "XL"]
+
+  // Fetch product data
+  useEffect(() => {
+    const fetchProduct = async () => {
+      try {
+        setLoading(true)
+        const response = await fetch(`/api/products?id=${productId}`)
+        
+        if (!response.ok) {
+          if (response.status === 404) {
+            throw new Error('Product not found')
+          }
+          throw new Error('Failed to fetch product')
+        }
+        
+        const data = await response.json()
+        setProduct(data)
+        setError(null)
+      } catch (err) {
+        setError(err instanceof Error ? err.message : 'An error occurred')
+        console.error('Error fetching product:', err)
+      } finally {
+        setLoading(false)
+      }
+    }
+    
+    if (productId) {
+      fetchProduct()
+    }
+  }, [productId])
 
   const handleAddToCart = () => {
     if (!selectedSize) {
       alert("Please select a size")
       return
     }
+    
+    if (!product) return
 
     for (let i = 0; i < quantity; i++) {
       addItem({
-        id: productId,
+        id: product.id,
         name: product.name,
         price: product.price,
         size: selectedSize,
-        image: product.images[0],
+        image: product.image,
       })
     }
 
     setAddedToCart(true)
     setTimeout(() => setAddedToCart(false), 2000)
+  }
+
+  // Loading state
+  if (loading) {
+    return (
+      <div className="max-w-7xl mx-auto px-4 md:px-8 py-12">
+        <div className="flex items-center justify-center h-64">
+          <Loader className="w-8 h-8 animate-spin text-muted-foreground" />
+          <span className="ml-3 text-muted-foreground">Loading product...</span>
+        </div>
+      </div>
+    )
+  }
+
+  // Error state
+  if (error || !product) {
+    return (
+      <div className="max-w-7xl mx-auto px-4 md:px-8 py-12">
+        <div className="text-center">
+          <h2 className="text-2xl font-semibold text-destructive mb-2">Product Not Found</h2>
+          <p className="text-muted-foreground">
+            {error || "The product you're looking for doesn't exist."}
+          </p>
+        </div>
+      </div>
+    )
   }
 
   return (
@@ -56,15 +121,17 @@ export function ProductDetails({ productId }: { productId: string }) {
         <div className="space-y-4">
           <div className="relative aspect-[3/4] bg-muted rounded-lg overflow-hidden">
             <Image
-              src={product.images[selectedImage] || "/placeholder.svg"}
+              src={productImages[selectedImage] || "/placeholder.svg"}
               alt={product.name}
               fill
               className="object-cover"
+              sizes="(max-width: 768px) 100vw, 50vw"
+              priority
             />
           </div>
 
           <div className="grid grid-cols-4 gap-3">
-            {product.images.map((image, index) => (
+            {productImages.map((image, index) => (
               <button
                 key={index}
                 onClick={() => setSelectedImage(index)}
@@ -77,6 +144,7 @@ export function ProductDetails({ productId }: { productId: string }) {
                   alt={`${product.name} view ${index + 1}`}
                   fill
                   className="object-cover"
+                  sizes="(max-width: 768px) 25vw, 10vw"
                 />
               </button>
             ))}
@@ -87,7 +155,21 @@ export function ProductDetails({ productId }: { productId: string }) {
           <h1 className="text-4xl font-serif mb-4 text-balance">{product.name}</h1>
           <p className="text-2xl mb-6">${product.price.toFixed(2)}</p>
 
-          <p className="text-muted-foreground leading-relaxed mb-8">{product.description}</p>
+          {/* Product description - you might want to add this to your sheet */}
+          <p className="text-muted-foreground leading-relaxed mb-8">
+            {product.description || "Elegant product crafted from premium materials. Features a relaxed fit and perfect for various occasions."}
+          </p>
+
+          <div className="mb-6">
+            <div className="flex flex-wrap gap-2 mb-4">
+              <span className="px-3 py-1 bg-muted rounded-full text-sm">{product.category}</span>
+              <span className="px-3 py-1 bg-muted rounded-full text-sm">{product.gender}</span>
+              <span className="px-3 py-1 bg-muted rounded-full text-sm">{product.color}</span>
+              {product.collection && (
+                <span className="px-3 py-1 bg-muted rounded-full text-sm">{product.collection}</span>
+              )}
+            </div>
+          </div>
 
           <div className="mb-8">
             <h3 className="font-medium mb-4">Select Size</h3>
@@ -141,11 +223,15 @@ export function ProductDetails({ productId }: { productId: string }) {
           <div className="pt-8 border-t border-border space-y-4">
             <div>
               <h4 className="font-medium mb-2">Fabric Details</h4>
-              <p className="text-sm text-muted-foreground">{product.fabric}</p>
+              <p className="text-sm text-muted-foreground">
+                {product.fabric || "100% Premium materials"}
+              </p>
             </div>
             <div>
               <h4 className="font-medium mb-2">Care Instructions</h4>
-              <p className="text-sm text-muted-foreground">{product.care}</p>
+              <p className="text-sm text-muted-foreground">
+                {product.care || "Machine wash cold, hang dry"}
+              </p>
             </div>
           </div>
         </div>

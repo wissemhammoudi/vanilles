@@ -27,7 +27,10 @@ export function ContactFormWholesale() {
   const [loading, setLoading] = useState(false)
   const [success, setSuccess] = useState(false)
   const [error, setError] = useState("")
-
+  const webhookUrl  = process.env.NEXT_PUBLIC_CONTACT_WEBHOOK_URL
+  if (!webhookUrl) {
+    throw new Error("Webhook URL is not defined")
+  }
   // Clear success message after 3 seconds
   useEffect(() => {
     if (success) {
@@ -70,7 +73,7 @@ export function ContactFormWholesale() {
       }
 
       const response = await fetch(
-        "http://vps-20661040.vps.ovh.net:5678/webhook/contact-us",
+        webhookUrl,
         {
           method: "POST",
           headers: {

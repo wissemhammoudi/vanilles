@@ -22,7 +22,10 @@ export function ContactForm() {
   const [loading, setLoading] = useState(false)
   const [success, setSuccess] = useState(false)
   const [error, setError] = useState("")
-
+  const webhookUrl = process.env.NEXT_PUBLIC_CONTACT_WEBHOOK_URL
+  if (!webhookUrl) {
+    throw new Error("Webhook URL is not defined")
+  }
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setLoading(true)
@@ -39,9 +42,8 @@ export function ContactForm() {
         formType: "contact", 
       }
 
-      const response = await fetch(
-        "http://vps-20661040.vps.ovh.net:5678/webhook/contact-us",
-        {
+      const response = await fetch(webhookUrl,
+            {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
