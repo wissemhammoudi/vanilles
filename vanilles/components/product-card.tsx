@@ -10,8 +10,9 @@ interface Product {
 }
 
 export function ProductCard({ product }: { product: Product }) {
+  const id = encodeURIComponent(String(product.id).trim())
   return (
-    <Link href={`/product/${product.id}`}>
+    <Link href={`/product/${id}`}>
       <Card className="group overflow-hidden border-none shadow-none hover:shadow-lg transition-shadow duration-300">
         <div className="relative aspect-[3/4] overflow-hidden bg-muted">
           <Image
