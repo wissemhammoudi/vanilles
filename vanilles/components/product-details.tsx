@@ -5,7 +5,8 @@ import Image from "next/image"
 import { Button } from "@/components/ui/button"
 import { ShoppingBag, Check, Plus, Minus, Loader } from "lucide-react"
 import { useCart } from "@/lib/cart-context"
-
+import { Navbar } from "@/components/navbar"
+import { Footer } from "@/components/footer"
 interface Product {
   id: string
   name: string
@@ -155,6 +156,8 @@ export function ProductDetails({ productId }: { productId: string }) {
   }
 
   return (
+    <div>
+      <Navbar/>
     <div className="max-w-7xl mx-auto px-4 md:px-8 py-8">
       <div className="grid md:grid-cols-2 gap-8 md:gap-12">
         {/* Image Gallery */}
@@ -296,6 +299,8 @@ export function ProductDetails({ productId }: { productId: string }) {
           </div>
         </div>
       </div>
+    </div>
+    <Footer/>
     </div>
   )
 }
